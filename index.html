@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Consultoría 3D</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: black;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+    import { FontLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/FontLoader.js';
+    import { TextGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/geometries/TextGeometry.js';
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 3;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const starsGeometry = new THREE.BufferGeometry();
+    const starsCount = 1000;
+    const positions = [];
+    for (let i = 0; i < starsCount; i++) {
+      positions.push((Math.random() - 0.5) * 100);
+      positions.push((Math.random() - 0.5) * 100);
+      positions.push((Math.random() - 0.5) * 100);
+    }
+    starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
+    const stars = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(stars);
+
+    const light = new THREE.PointLight(0xffffff, 1.5);
+    light.position.set(5, 5, 5);
+    scene.add(light);
+
+    // Cargar modelo GLB
+    const loader = new GLTFLoader();
+    loader.load('brain.glb', function (gltf) {
+      const brain = gltf.scene;
+      brain.scale.set(1, 1, 1);
+      brain.rotation.y = Math.PI;
+      scene.add(brain);
+
+      function animate() {
+        requestAnimationFrame(animate);
+        brain.rotation.y += 0.01;
+        stars.rotation.y += 0.002;
+        if (textMesh) textMesh.rotation.y -= 0.01;
+        renderer.render(scene, camera);
+      }
+      animate();
+    });
+
+    // Texto 3D
+    let textMesh;
+    const loaderFont = new FontLoader();
+    loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
+      const textGeometry = new TextGeometry('consultoria.eus', {
+        font: font,
+        size: 0.3,
+        height: 0.05,
+      });
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x00ffff });
+      textMesh = new THREE.Mesh(textGeometry, textMaterial);
+      textMesh.position.set(-1.5, -1, 0);
+      scene.add(textMesh);
+    });
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
